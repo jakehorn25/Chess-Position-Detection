@@ -26,7 +26,7 @@ def getFENsfromSet(subset):
 def loadImages(subset, folder):
     X = []
     for e in subset:
-        X.append(color.rgb2gray(io.imread('img/'+folder+e)))
+        X.append(io.imread('img/'+folder+e))
     return X
 
 def FENtoMatrix(fen):
@@ -67,7 +67,7 @@ def to64squares(img):
     squares = []
     i,j = 0,0
     for _ in range(64):
-        squares.append(img[j*size:(j+1)*size-1,i*size:(i+1)*size-1])
+        squares.append(img[j*size:(j+1)*size-1,i*size:(i+1)*size-1,:])
         i,j = nextSquare(i,j)
     
     return np.array(squares)
@@ -78,12 +78,12 @@ def plotSquares(squares):
     _, axs = plt.subplots(8,8)
     
     for i, ax in enumerate(axs.flatten()):
-        ax.imshow(squares[i], cmap='gray', norm=NoNorm())
+        ax.imshow(squares[i])#, cmap='gray', norm=NoNorm())
         ax.set_xticks([])
         ax.set_yticks([])
         
     #plt.tight_layout()
-    plt.gray()
+    #plt.gray()
     plt.show()
     pass
 
@@ -103,7 +103,7 @@ def importXy(string= 'train/', n=100):
     X,y = importImages(string, n)
     Xs = allToSquares(X)
     ys = allFENtoCat(y)
-    return Xs.reshape(-1,49,49,1),ys
+    return Xs.reshape(-1,49,49,3),ys
 
 def getWeights(ys):
     weights = ys.sum(axis=0).max()/ys.sum(axis=0)
@@ -121,24 +121,52 @@ def getErrorIndicies(yhat,y):
     idx = np.where(yhm!=ym)
     return idx
 
-def getBoard(idx, X):
-    X = X.reshape(-1,64,49,49)
+def plotBoard(idx, X, y):
+    X = X.reshape(-1,64,49,49,3)
     board = X[idx[0],:,:,:]
-    return board.reshape(64,49,49)
+    board = board.reshape(64,49,49,3)
+    
+    squares = np.vsplit(board, 64)
+    temp = np.concatenate(squares, axis=2)
+    temp = temp.reshape(49,-1,3)
+    rows = np.split(temp, 8, axis=1)
+    board= np.concatenate(rows, axis=0)
+    
+    _, axs = plt.subplots(1,2, figsize = [10,5])
+
+    axs[0].imshow(board)
+    axs[0].set_xticks([])
+    axs[0].set_yticks([])
+    axs[1].text(0,0, matrixToText(y[idx[0]]),
+                fontproperties='monospace',
+                fontsize='x-large')
+    axs[0].set_xticks([])
+    axs[0].set_yticks([])
+    plt.show()
+    pass
+
+def matrixToText(y):
+    string = ''
+    for arr in y:
+        string += '|'
+        for e in arr:
+            string += e + '|'
+        string += '\n'
+    return string
 
 if __name__ == '__main__':
     #print (FENtoMatrix('1B1B2K1-1B6-5N2-6k1-8-8-8-4nq2'))
     X,y = importXy('test/', n=100)
-    model = load_model('models/squaremodel.h5')
+    model = load_model('models/colormodel.h5')
 
     yhat = model.predict(X)
     yhm = yhatToMatrix(yhat, y.columns)
     ym =  yhatToMatrix(y, y.columns)
 
     errors = getErrorIndicies(yhat,y)
-    print(yhm[errors[0],:,:])
+    print()
     if errors:
-        plotSquares(getBoard(errors[0],X))
+        plotBoard(errors[0],X,yhm)
 
     #ys = yToSquares(y)
     

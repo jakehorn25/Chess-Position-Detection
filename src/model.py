@@ -32,7 +32,7 @@ if __name__ == '__main__':
     classes = 13
     filters = 20 
     kernel_size = (5,5)
-    shape = (49,49,1)
+    shape = (49,49,3)
 
     model= define_model(filters, kernel_size, shape, classes)
 
@@ -57,3 +57,4 @@ if __name__ == '__main__':
     print('Test accuarcy:',score[1])
 
     breakpoint()
+    #model.save('models/colormodel.h5')
