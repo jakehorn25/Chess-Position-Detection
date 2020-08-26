@@ -101,24 +101,23 @@ def importXy(string= 'train/', n=100):
     X,y = importImages(string, n)
     Xs = allToSquares(X)
     ys = allFENtoCat(y)
-    return Xs,ys
+    return Xs.reshape(-1,49,49,1),ys
+
+def getWeights(ys):
+    weights = ys.sum(axis=0).max()/ys.sum(axis=0)
+    
+    return weights.reset_index().iloc[:,1].to_dict()
 
 if __name__ == '__main__':
     #print (FENtoMatrix('1B1B2K1-1B6-5N2-6k1-8-8-8-4nq2'))
-    X,y = importImages(n=10)
+    X,y = importImages(n=50)
     Xs = allToSquares(X)
     ys = allFENtoCat(y)
+    print(ys)
+    print(getWeights(ys))
     #ys = yToSquares(y)
-
     
-    fig, ax =plt.subplots()
-    ax.imshow(Xs[0,:,:], cmap='gray', norm=NoNorm())
-    #ax.title(ys.iloc[0,:])
-    plt.gray()
-    plt.show()
-
     #squares = to64squares(X[0])
-    #plotSquares(squares)
-    
-    breakpoint()
+    #plotSquares(Xs)
+    #plt.show()
     
