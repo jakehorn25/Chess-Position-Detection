@@ -8,6 +8,8 @@ import os
 
 from skimage import io, color
 
+from tensorflow.keras.models import load_model
+
 def importImages(string= 'train/', n=100):
     path = 'img/'+string
     files = os.listdir(path)
@@ -71,8 +73,8 @@ def to64squares(img):
     return np.array(squares)
 
 def plotSquares(squares):
-    io.imshow(X[0])
-    plt.title(y[0])
+    #io.imshow(X[0])
+    #plt.title(y[0])
     _, axs = plt.subplots(8,8)
     
     for i, ax in enumerate(axs.flatten()):
@@ -108,13 +110,36 @@ def getWeights(ys):
     
     return weights.reset_index().iloc[:,1].to_dict()
 
+def yhatToMatrix(yhat, columns):
+    frame = pd.DataFrame(yhat, columns=columns)
+    arr = np.array(frame.idxmax(axis=1)).reshape(-1,8,8)
+    return arr
+
+def getErrorIndicies(yhat,y):
+    yhm = yhatToMatrix(yhat, y.columns)
+    ym =  yhatToMatrix(y, y.columns)
+    idx = np.where(yhm!=ym)
+    return idx
+
+def getBoard(idx, X):
+    X = X.reshape(-1,64,49,49)
+    board = X[idx[0],:,:,:]
+    return board.reshape(64,49,49)
+
 if __name__ == '__main__':
     #print (FENtoMatrix('1B1B2K1-1B6-5N2-6k1-8-8-8-4nq2'))
-    X,y = importImages(n=50)
-    Xs = allToSquares(X)
-    ys = allFENtoCat(y)
-    print(ys)
-    print(getWeights(ys))
+    X,y = importXy('test/', n=100)
+    model = load_model('models/squaremodel.h5')
+
+    yhat = model.predict(X)
+    yhm = yhatToMatrix(yhat, y.columns)
+    ym =  yhatToMatrix(y, y.columns)
+
+    errors = getErrorIndicies(yhat,y)
+    print(yhm[errors[0],:,:])
+    if errors:
+        plotSquares(getBoard(errors[0],X))
+
     #ys = yToSquares(y)
     
     #squares = to64squares(X[0])

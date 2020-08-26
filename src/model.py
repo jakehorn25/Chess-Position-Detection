@@ -10,7 +10,7 @@ from tensorflow.keras.utils import to_categorical
 import numpy as np
 np.random.seed(0)
 
-def define_model(filters, kernel_size, shape):
+def define_model(filters, kernel_size, shape, classes):
     model = Sequential()
     activators = ['relu']#'linear', 'sigmoid', 'tanh', 'relu', 'softplus', 'softsign'
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     kernel_size = (5,5)
     shape = (49,49,1)
 
-    model= define_model(filters, kernel_size, shape)
+    model= define_model(filters, kernel_size, shape, classes)
 
     for i in range(10):
         print (f'Round {i+1} of 10')
