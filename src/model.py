@@ -32,11 +32,11 @@ if __name__ == '__main__':
     classes = 13
     filters = 20 
     kernel_size = (5,5)
-    shape = (49,49,3)
+    shape = (50,50,3)
 
     model= define_model(filters, kernel_size, shape, classes)
 
-    for i in range(10):
+    for i in range(8):
         print (f'Round {i+1} of 10')
         Xtr ,ytr = importXy('train/', 80)
         Xte, yte = importXy('test/' , 20)

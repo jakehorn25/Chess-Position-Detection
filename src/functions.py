@@ -67,7 +67,7 @@ def to64squares(img):
     squares = []
     i,j = 0,0
     for _ in range(64):
-        squares.append(img[j*size:(j+1)*size-1,i*size:(i+1)*size-1,:])
+        squares.append(img[j*size:(j+1)*size,i*size:(i+1)*size,:])
         i,j = nextSquare(i,j)
     
     return np.array(squares)
@@ -103,7 +103,7 @@ def importXy(string= 'train/', n=100):
     X,y = importImages(string, n)
     Xs = allToSquares(X)
     ys = allFENtoCat(y)
-    return Xs.reshape(-1,49,49,3),ys
+    return Xs.reshape(-1,50,50,3),ys
 
 def getWeights(ys):
     weights = ys.sum(axis=0).max()/ys.sum(axis=0)
@@ -122,27 +122,28 @@ def getErrorIndicies(yhat,y):
     return idx
 
 def plotBoard(idx, X, y):
-    X = X.reshape(-1,64,49,49,3)
-    board = X[idx[0],:,:,:]
-    board = board.reshape(64,49,49,3)
-    
-    squares = np.vsplit(board, 64)
-    temp = np.concatenate(squares, axis=2)
-    temp = temp.reshape(49,-1,3)
-    rows = np.split(temp, 8, axis=1)
-    board= np.concatenate(rows, axis=0)
-    
-    _, axs = plt.subplots(1,2, figsize = [10,5])
+    X = X.reshape(-1,64,50,50,3)
+    for i in range(len(idx)):
+        board = X[idx[i],:,:,:]
+        board = board.reshape(64,50,50,3)
+        
+        squares = np.vsplit(board, 64)
+        temp = np.concatenate(squares, axis=2)
+        temp = temp.reshape(50,-1,3)
+        rows = np.split(temp, 8, axis=1)
+        board= np.concatenate(rows, axis=0)
+        
+        _, axs = plt.subplots(1,2, figsize = [10,5])
 
-    axs[0].imshow(board)
-    axs[0].set_xticks([])
-    axs[0].set_yticks([])
-    axs[1].text(0,0, matrixToText(y[idx[0]]),
-                fontproperties='monospace',
-                fontsize='x-large')
-    axs[0].set_xticks([])
-    axs[0].set_yticks([])
-    plt.show()
+        axs[0].imshow(board)
+        axs[0].set_xticks([])
+        axs[0].set_yticks([])
+        axs[1].text(0,0, matrixToText(y[idx[i]]),
+                    fontproperties='monospace',
+                    fontsize=25)
+        axs[0].set_xticks([])
+        axs[0].set_yticks([])
+        plt.show()
     pass
 
 def matrixToText(y):
@@ -157,7 +158,7 @@ def matrixToText(y):
 if __name__ == '__main__':
     #print (FENtoMatrix('1B1B2K1-1B6-5N2-6k1-8-8-8-4nq2'))
     X,y = importXy('test/', n=100)
-    model = load_model('models/colormodel.h5')
+    model = load_model('models/colormodel5x5.h5')
 
     yhat = model.predict(X)
     yhm = yhatToMatrix(yhat, y.columns)
