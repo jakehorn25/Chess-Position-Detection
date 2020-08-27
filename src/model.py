@@ -1,4 +1,4 @@
-from functions import importXy, getWeights
+from functions import importXy, getWeights, plotErrors
 
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
@@ -32,17 +32,15 @@ if __name__ == '__main__':
     classes = 13
     filters = 20 
     kernel_size = (5,5)
-    shape = (50,50,3)
+    shape = (50,50,1)
 
     model= define_model(filters, kernel_size, shape, classes)
-
-    for i in range(8):
-        print (f'Round {i+1} of 10')
+    rounds = 20
+    for i in range(rounds):
+        print (f'Round {i+1} of {rounds}')
         Xtr ,ytr = importXy('train/', 80)
-        Xte, yte = importXy('test/' , 20)
+        Xte, yte = importXy('train/' , 20)
         
-        
-
         model.fit(
             x=Xtr, y=ytr, batch_size=64, epochs=1, verbose=1, callbacks=None,
             validation_split=0.0, validation_data=(Xte,yte), shuffle=False, class_weight=getWeights(ytr),
@@ -56,5 +54,7 @@ if __name__ == '__main__':
     print('Test score:',score[0])
     print('Test accuarcy:',score[1])
 
+    plotErrors(model, Xte, yte)
+    file = 'throwaway'
     breakpoint()
-    #model.save('models/colormodel.h5')
+    model.save(f'models/{file}.h5')
