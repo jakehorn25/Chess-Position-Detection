@@ -10,6 +10,11 @@ from skimage import io, color
 
 from tensorflow.keras.models import load_model
 
+channels = 3
+gray = True
+if gray: 
+    channels = 1
+
 def importImages(string= 'train/', n=100):
     path = 'img/'+string
     files = os.listdir(path)
@@ -26,7 +31,7 @@ def getFENsfromSet(subset):
 def loadImages(subset, folder):
     X = []
     for e in subset:
-        X.append(io.imread('img/'+folder+e, as_gray=True))
+        X.append(io.imread('img/'+folder+e, as_gray=gray))
     return X
 
 def FENtoMatrix(fen):
@@ -67,7 +72,7 @@ def to64squares(img):
     squares = []
     i,j = 0,0
     for _ in range(64):
-        squares.append(img[j*size:(j+1)*size,i*size:(i+1)*size])
+        squares.append(img[j*size:(j+1)*size,i*size:(i+1)*size]) ###
         i,j = nextSquare(i,j)
     
     return np.array(squares)
@@ -75,10 +80,12 @@ def to64squares(img):
 def plotSquares(squares):
     #io.imshow(X[0])
     #plt.title(y[0])
-    _, axs = plt.subplots(8,8)
-    
+    fig, axs = plt.subplots(8,8)
+    fig.patch.set_facecolor('black')
+    plt.rcParams['savefig.facecolor']='black'
     for i, ax in enumerate(axs.flatten()):
-        ax.imshow(squares[i])#, cmap='gray', norm=NoNorm())
+        if gray: ax.imshow(squares[i], cmap='gray', norm=NoNorm())
+        else :   ax.imshow(squares[i])
         ax.set_xticks([])
         ax.set_yticks([])
         
@@ -103,7 +110,7 @@ def importXy(string= 'train/', n=100):
     X,y = importImages(string, n)
     Xs = allToSquares(X)
     ys = allFENtoCat(y)
-    return Xs.reshape(-1,50,50,1),ys
+    return Xs.reshape(-1,50,50,channels),ys
 
 def getWeights(ys):
     weights = ys.sum(axis=0).max()/ys.sum(axis=0)
@@ -112,7 +119,9 @@ def getWeights(ys):
 
 def plotWeights(ys):
     weights = ys.sum(axis=0).max()/ys.sum(axis=0)
-
+    weights.plot.bar()
+    plt.show()
+    pass
 
 def yhatToMatrix(yhat, columns):
     frame = pd.DataFrame(yhat, columns=columns)
@@ -127,22 +136,19 @@ def getErrorIndicies(yhat,y):
     return idx
 
 def plotBoard(idx, X, y):
-    X = X.reshape(-1,64,50,50)
+    X = X.reshape(-1,64,50,50,channels)
     for i in range(len(idx)):
         board = X[idx[i],:,:,:]
-        board = board.reshape(64,50,50)
-        
-        squares = np.vsplit(board, 64)
-        temp = np.concatenate(squares, axis=2)
-        temp = temp.reshape(50,-1)
-        rows = np.split(temp, 8, axis=1)
-        board= np.concatenate(rows, axis=0)
+        board = board.reshape(64,50,50,channels)
+
+        board= reshape_squares(board,8,8)
         
         fig, axs = plt.subplots(1,2, figsize = [10,5])
         fig.patch.set_facecolor('black')
         plt.rcParams['savefig.facecolor']='black'
         fig.patch.set_alpha(.5)
-        axs[0].imshow(board, cmap='gray', norm=NoNorm())
+        if gray: axs[0].imshow(board.reshape(-1,50,50,channels), cmap='gray', norm=NoNorm())
+        else:    axs[0].imshow(board)
         axs[0].set_xticks([])
         axs[0].set_yticks([])
         axs[1].text(0,0, matrixToText(y[idx[i]]), 
@@ -177,19 +183,55 @@ def plotErrors(model, testX, testy):
         plotBoard(errors[0],testX,yhm)
     pass
 
+def reshape_squares(imgs,nrow,ncols):
+    
+    if nrow*ncols == len(imgs):
+        squares = np.vsplit(imgs, len(imgs))
+        temp = np.concatenate(squares, axis=2)
+        temp = temp.reshape(50,-1, channels)
+        rows = np.split(temp, nrow, axis=1)
+        return np.concatenate(rows, axis=0)
+    else:
+        print('row/col mismatch')
+        return None
+    pass
+
+def we30Kings(n=30):
+    X,y = importXy(n=n)
+    kings = y.index[y['k']==1]
+    kimg = X[kings]
+    
+    kimg= reshape_squares(kimg,3,10)
+
+    fig, ax = plt.subplots()
+    fig.patch.set_facecolor('black')
+    plt.rcParams['savefig.facecolor']='black'
+    fig.patch.set_alpha(.5)
+    if gray: ax.imshow(kimg.reshape(kimg.shape[0],-1), cmap='gray', norm=NoNorm())
+    else:    ax.imshow(kimg)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    
+    plt.tight_layout()
+    plt.show()
+    pass
+
+
 if __name__ == '__main__':
     #print (FENtoMatrix('1B1B2K1-1B6-5N2-6k1-8-8-8-4nq2'))
     
+    we30Kings()
+    
+    '''
     X,y = importXy('test/', n=100)
     model = load_model('models/colormodel5x5.h5')
     plotErrors(model, X, y)
-    
-    
-
+    '''
+    '''
     X,y = importImages(n=1)
     squares = to64squares(X[0])
     plotSquares(squares)
-
+    '''
     #ys = yToSquares(y)
     
     #squares = to64squares(X[0])
