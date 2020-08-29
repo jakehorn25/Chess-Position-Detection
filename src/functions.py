@@ -11,7 +11,7 @@ from skimage import io, color
 from tensorflow.keras.models import load_model
 
 channels = 3
-gray = True
+gray = False
 if gray: 
     channels = 1
 
@@ -60,9 +60,14 @@ def matrixToCategories(matrix):
     categories = pd.get_dummies(matrix)
     return categories
 
-
-def matrixToFEN(matrix):
-    pass
+def vectorizeFEN(lst, length):
+    acc = []
+    for fen in lst:
+        vector = [char for char in fen]
+        while len(vector) < length:
+            vector.append(' ')
+        acc.append(np.array(vector))
+    return acc
 
 def displayMatrix(matrix):
     pass
@@ -78,8 +83,7 @@ def to64squares(img):
     return np.array(squares)
 
 def plotSquares(squares):
-    #io.imshow(X[0])
-    #plt.title(y[0])
+   
     fig, axs = plt.subplots(8,8)
     fig.patch.set_facecolor('black')
     plt.rcParams['savefig.facecolor']='black'
@@ -89,8 +93,6 @@ def plotSquares(squares):
         ax.set_xticks([])
         ax.set_yticks([])
         
-    #plt.tight_layout()
-    #plt.gray()
     plt.show()
     pass
 
@@ -141,14 +143,14 @@ def plotBoard(idx, X, y):
         board = X[idx[i],:,:,:]
         board = board.reshape(64,50,50,channels)
 
-        board= reshape_squares(board,8,8)
+        img= reshape_squares(board,8,8)
         
         fig, axs = plt.subplots(1,2, figsize = [10,5])
         fig.patch.set_facecolor('black')
         plt.rcParams['savefig.facecolor']='black'
         fig.patch.set_alpha(.5)
-        if gray: axs[0].imshow(board.reshape(-1,50,50,channels), cmap='gray', norm=NoNorm())
-        else:    axs[0].imshow(board)
+        if gray: axs[0].imshow(img.reshape(img.shape[0],-1), cmap='gray', norm=NoNorm())
+        else:    axs[0].imshow(img)
         axs[0].set_xticks([])
         axs[0].set_yticks([])
         axs[1].text(0,0, matrixToText(y[idx[i]]), 
@@ -175,8 +177,7 @@ def matrixToText(y):
 def plotErrors(model, testX, testy):
     yhat = model.predict(testX)
     yhm = yhatToMatrix(yhat, testy.columns)
-    ym =  yhatToMatrix(testy, testy.columns)
-
+    
     errors = getErrorIndicies(yhat,testy)
     
     if errors:
@@ -187,8 +188,8 @@ def reshape_squares(imgs,nrow,ncols):
     
     if nrow*ncols == len(imgs):
         squares = np.vsplit(imgs, len(imgs))
-        temp = np.concatenate(squares, axis=2)
-        temp = temp.reshape(50,-1, channels)
+        row = np.concatenate(squares, axis=2)
+        temp = row.reshape(50,-1, channels)
         rows = np.split(temp, nrow, axis=1)
         return np.concatenate(rows, axis=0)
     else:
@@ -201,14 +202,14 @@ def we30Kings(n=30):
     kings = y.index[y['k']==1]
     kimg = X[kings]
     
-    kimg= reshape_squares(kimg,3,10)
+    img= reshape_squares(kimg[:30,:,:,:],3,10)
 
     fig, ax = plt.subplots()
     fig.patch.set_facecolor('black')
     plt.rcParams['savefig.facecolor']='black'
     fig.patch.set_alpha(.5)
-    if gray: ax.imshow(kimg.reshape(kimg.shape[0],-1), cmap='gray', norm=NoNorm())
-    else:    ax.imshow(kimg)
+    if gray: ax.imshow(img.reshape(img.shape[0],-1), cmap='gray', norm=NoNorm())
+    else:    ax.imshow(img)
     ax.set_xticks([])
     ax.set_yticks([])
     
@@ -218,13 +219,12 @@ def we30Kings(n=30):
 
 
 if __name__ == '__main__':
-    #print (FENtoMatrix('1B1B2K1-1B6-5N2-6k1-8-8-8-4nq2'))
-    
+        
     we30Kings()
     
     '''
     X,y = importXy('test/', n=100)
-    model = load_model('models/colormodel5x5.h5')
+    model = load_model('models/final.h5')
     plotErrors(model, X, y)
     '''
     '''
